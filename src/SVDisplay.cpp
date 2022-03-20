@@ -105,6 +105,7 @@ bool SVDisplayView::init(const int32 wnd_width, const int32 wnd_height, std::sha
         aspect_ratio = static_cast<float>(wnd_width) / wnd_height;
         disp_view = scene_view;
 
+
         /*
             glfw initialize
         */
@@ -122,6 +123,13 @@ bool SVDisplayView::init(const int32 wnd_width, const int32 wnd_height, std::sha
             return false;
         }
         glfwMakeContextCurrent(window);
+
+        GLenum err = glewInit();
+        if (err != GLEW_OK) {
+          // Problem: glewInit failed, something is seriously wrong.
+          std::cout << "glewInit failed: " << glewGetErrorString(err) << std::endl;
+          exit(1);
+        }
 
 
 

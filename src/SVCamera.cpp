@@ -1,7 +1,7 @@
 #include <ctime>
 #include <fcntl.h>
-#include <sys/ioctl.h>
-#include <unistd.h>
+//#include <sys/ioctl.h>
+//#include <unistd.h>
 
 #include <thread>
 #include <SVCamera.hpp>
@@ -17,8 +17,8 @@
 #include <opencv2/cudawarping.hpp>
 
 
-#include <linux/videodev2.h>
-#include <sys/mman.h>
+//#include <linux/videodev2.h>
+//#include <sys/mman.h>
 
 #include <omp.h>
 
@@ -32,17 +32,20 @@ namespace ccu = cv::cuda;
 
 static int xioctl(int fd, int request, void* arg)
 {
+  /*
 	int status = -1;
 	do{
 		status = ioctl(fd, request, arg);
 	}
 	while((status == -1) && EINTR == errno);
 	return status;
+  */
+  return 0;
 }
 
 
 inline const char* v4l2_format_str(uint32_t fmt)
-{
+{/*
 	switch(fmt)
 	{
 		case V4L2_PIX_FMT_SBGGR8: return "SBGGR8 (V4L2_PIX_FMT_SBGGR8)";
@@ -53,9 +56,11 @@ inline const char* v4l2_format_str(uint32_t fmt)
 		case V4L2_PIX_FMT_SRGGB10: return "SRGGB10 (V4L2_PIX_FMT_SRGGB10)";
 		case V4L2_PIX_FMT_UYVY: return "UYVY (V4L2_PIX_FMT_UYVY)";
 	}
+  */
 	return "UNKNOW";
 }
 
+/*
 inline void v4l2_print_formatdesc(const v4l2_fmtdesc& desc)
 {
 	LOG_DEBUG("CameraV4L2 -- format #u%", desc.index);
@@ -76,6 +81,7 @@ inline void v4l2_print_format(const v4l2_format& fmt, const char* text)
 	LOG_DEBUG("CameraV4L2 -- color 0x%X", fmt.fmt.pix.colorspace);
 	LOG_DEBUG("CameraV4L2 -- field 0x%X", fmt.fmt.pix.field);
 }
+*/
 
 // ------------------------SECTION--------------------------
 // -----------------CameraInfo Implementation---------------
@@ -88,12 +94,13 @@ bool CameraSource::init(const std::string& devicePath_)
 	if (devicePath.empty())
 		return false;
 
-	if ((fd = open(devicePath.c_str(), O_RDWR | O_NONBLOCK, 0)) < 0){
+  /*
+  if ((fd = open(devicePath.c_str(), O_RDWR | O_NONBLOCK, 0)) < 0){
 		LOG_ERROR("Camera device [%s] open failed with fd val %d", devicePath.c_str(), fd);
 		assert(0);
 		return false;
 	}
-	
+	*/
 	return initCaps() && initFormats() && initStream() && initCuda();
 }
 
@@ -105,8 +112,10 @@ bool CameraSource::deinit()
 
 	deinitMMap();
 
+  /*
 	::close(fd);
 	fd = -1;	
+  */
 
 	deinitCuda();
 	
@@ -116,7 +125,9 @@ bool CameraSource::deinit()
 
 bool CameraSource::initCaps()
 {
-	assert(fd > 0);
+	//assert(fd > 0);
+
+  /*
 	v4l2_capability caps;
 	if (xioctl(fd, VIDIOC_QUERYCAP, &caps) < 0){
 		LOG_ERROR("CameraV4L2 -- failed to query caps (xioctl VIDIOC_QUERYCAP) for %s", devicePath.c_str());
@@ -139,14 +150,16 @@ bool CameraSource::initCaps()
 	}
 #undef PRINT_CAP
 	return true;
+  */
+  return true;
 }
 
 
 
 bool CameraSource::initFormats()
 {
-	assert(fd > 0);
-	
+	//assert(fd > 0);
+	/*
 	v4l2_fmtdesc desc;
 	std::memset(&desc, 0, sizeof(v4l2_fmtdesc));
 	desc.index = 0;
@@ -158,12 +171,14 @@ bool CameraSource::initFormats()
 		++desc.index;
 	}
 	return true;
+  */
+  return true;
 }
 
 
 bool CameraSource::initStream()
 {
-	
+	/*
 	v4l2_format fmt;
 	std::memset(&fmt, 0, sizeof(v4l2_format));
 	fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -230,6 +245,17 @@ bool CameraSource::initStream()
 
 
 	return true;
+  */
+  
+
+  if (!initMMap())
+    return false;
+
+  frameSize.width = CAMERA_WIDTH;
+  frameSize.height = CAMERA_HEIGHT;
+  frameSizeBytes = CAMERA_WIDTH * CAMERA_HEIGHT * 4;
+
+  return true;
 }
 
 
@@ -246,7 +272,7 @@ bool CameraSource::initCuda()
 	}
 
 	// allocate output buffer
-	size_t size = frameSize.width * frameSize.height * 3;
+	size_t size = frameSize.width * frameSize.height * 4;
 	if (cuda_zero_copy)
 		cudaMallocManaged(&cuda_out_buffer, size, cudaMemAttachGlobal);
 	else
@@ -269,6 +295,13 @@ void CameraSource::deinitCuda()
 
 bool CameraSource::initMMap()
 {
+  buffers.resize(4);
+  for (size_t n = 0; n < buffers.size(); ++n) {
+    buffers[n].length = CAMERA_WIDTH * CAMERA_HEIGHT * 4;
+    buffers[n].start = malloc(buffers[n].length);
+  }
+
+  /*
 	v4l2_requestbuffers req;
 	std::memset(&req, 0, sizeof(v4l2_requestbuffers));
 
@@ -319,6 +352,9 @@ bool CameraSource::initMMap()
 	LOG_DEBUG("CameraV4L2 -- mapped %zu capture buffers with mmap", buffers.size());
 
 	return true;
+  */
+
+  return true;
 }
 
 
@@ -329,8 +365,9 @@ void CameraSource::deinitMMap()
 	int res;
 	for (auto& b : buffers){
 
-		if (b.start && (res = munmap(b.start, b.length)) != 0)
-			LOG_ERROR("Unmap failed: %d", res);
+    if (b.start) free(b.start);
+		//if (b.start && (res = munmap(b.start, b.length)) != 0)
+		//	LOG_ERROR("Unmap failed: %d", res);
 		b.start = nullptr;
 		b.length = 0;
 	}
@@ -343,7 +380,7 @@ bool CameraSource::startStream()
 {
 	if (streamStarted)
 		return false;
-
+  /*
 	v4l2_buffer buff;
 	for(size_t i = 0; i < buffers.size(); ++i){
 		std::memset(&buff, 0, sizeof(buff));
@@ -370,13 +407,16 @@ bool CameraSource::startStream()
 	streamStarted = true;
 
 	return true;
+  */
+  streamStarted = true;
+  return false;
 }
 
 bool CameraSource::stopStream()
 {
 	if (!streamStarted)
 		return true;
-
+  /*
 	LOG_DEBUG("CameraV4L2 -- %s stopping stream", devicePath.c_str());
 	v4l2_buf_type _type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
@@ -386,6 +426,9 @@ bool CameraSource::stopStream()
 	}
 	streamStarted = false;
 	return true;
+  */
+
+  return false;
 }
 
 
@@ -396,6 +439,7 @@ bool CameraSource::capture(size_t timeout, cv::Mat& res) const
 		return false;
 	}
 	
+  /*
 	fd_set fds;
 	FD_ZERO(&fds);
 	FD_SET(fd, &fds);
@@ -449,6 +493,14 @@ bool CameraSource::capture(size_t timeout, cv::Mat& res) const
 	}
 
 	return true;
+  */
+
+  auto tempMat = cv::Mat(frameSize, CV_8UC2, buffers[0].start);
+  assert(frameSizeBytes <= tempMat.dataend - tempMat.datastart);
+
+  cv::cvtColor(tempMat, res, cv::COLOR_YUV2BGR_UYVY);
+
+  return true;
 }
 
 // ----------------------END SECTION------------------------
@@ -459,8 +511,11 @@ bool CameraSource::capture(size_t timeout, cv::Mat& res) const
 
 bool InternalCameraParams::read(const std::string& filepath, const int num, const cv::Size& resol, const cv::Size& camResol)
 {
-	std::ifstream ifstrK{filepath + std::to_string(num) + ".K"};
-	std::ifstream ifstrDist{filepath + std::to_string(num) + ".dist"};
+  std::string fnk = filepath + std::to_string(num) + ".K";
+  std::string fnd = filepath + std::to_string(num) + ".dist";
+	std::ifstream ifstrK{fnk};
+	std::ifstream ifstrDist{fnd};
+
 	
 	if (!ifstrK.is_open() || !ifstrDist.is_open()){
 		LOG_ERROR("Can't opened file with internal camera params");
@@ -476,6 +531,8 @@ bool InternalCameraParams::read(const std::string& filepath, const int num, cons
 	resolution = resol;
 	ifstrK.close();
 	ifstrDist.close();
+
+  return true;
 }
 
 // ----------------------END SECTION------------------------
@@ -487,6 +544,7 @@ bool InternalCameraParams::read(const std::string& filepath, const int num, cons
 
 int MultiCameraSource::init(const std::string& param_filepath, const cv::Size& calibSize, const cv::Size& undistSize, const bool useUndist)
 {
+ 
 	bool camsOpenOk = true;
 	for (auto& cam : _cams){
 		LOG_DEBUG("Initing camera %s...", cam.devicePath.c_str());
@@ -512,9 +570,9 @@ int MultiCameraSource::init(const std::string& param_filepath, const cv::Size& c
 
 	for(size_t i = 0; i < buffs.size(); ++i){
 	      auto& buff = buffs[i];
-	      std::memset(&buff, 0, sizeof(v4l2_buffer));
-	      buff.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	      buff.memory = V4L2_MEMORY_MMAP;
+	      //std::memset(&buff, 0, sizeof(v4l2_buffer));
+	      //buff.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	      //buff.memory = V4L2_MEMORY_MMAP;
 	      CUHANDLE_ERROR(cudaStreamAttachMemAsync(_cudaStream[i], _cams[i].cuda_out_buffer, 0 , cudaMemAttachGlobal));
 	}
 
@@ -541,11 +599,11 @@ int MultiCameraSource::init(const std::string& param_filepath, const cv::Size& c
 		    cv::initUndistortRectifyMap(K, D, cv::Mat(), newK, undistSize, CV_32FC1, mapX, mapY);
 		    uData.remapX.upload(mapX);
 		    uData.remapY.upload(mapY);
-		    LOG_DEBUG("Generating undistort maps for camera - %i ... OK", i);
+		    LOG_DEBUG("Generating undistort maps for camera - %zi ... OK", i);
 	      }
 	}
 
-	return 0;
+  return 0;
 }
 
 
@@ -568,6 +626,7 @@ bool MultiCameraSource::stopStream()
 
 bool MultiCameraSource::capture(std::array<Frame, 4>& frames)
 {
+  /*
 	fd_set fds;
 	FD_ZERO(&fds);
 	int maxFd = -1;
@@ -617,13 +676,37 @@ bool MultiCameraSource::capture(std::array<Frame, 4>& frames)
 	}
 	
 
+  */
+  //for (size_t i = 0; i < _cams.size(); i++) {
+    //auto& buff = buffs[i];
+    //memset(_cams[i].buffers[0].start, rand(), CAMERA_WIDTH * CAMERA_HEIGHT * 4);
+  /*
+    for (int j = 0; j < CAMERA_WIDTH * CAMERA_HEIGHT * 4; j++) {
+      char* dataBuffer0 = (char *)_cams[0].buffers[0].start;
+      char* dataBuffer1 = (char *)_cams[1].buffers[0].start;
+      char* dataBuffer2 = (char *)_cams[2].buffers[0].start;
+      char* dataBuffer3 = (char *)_cams[3].buffers[0].start;
+      dataBuffer0[j] = rand();
+      dataBuffer1[j] = 0;
+      dataBuffer2[j] = 0xFF;
+      dataBuffer3[j] = 0X42;
+    }
+    */
+  //}
+
+  memset(_cams[0].buffers[0].start, 0, CAMERA_WIDTH * CAMERA_HEIGHT * 4);
+  memset(_cams[1].buffers[0].start, 70, CAMERA_WIDTH * CAMERA_HEIGHT * 4);
+  memset(_cams[2].buffers[0].start, 140, CAMERA_WIDTH * CAMERA_HEIGHT * 4);
+  memset(_cams[3].buffers[0].start, 210, CAMERA_WIDTH * CAMERA_HEIGHT * 4);
+
 	// do processing
 #ifndef NO_OMP
 	#pragma omp parallel for default(none) shared(frames)
 #endif
 	for(size_t i = 0; i < _cams.size(); ++i){
+
 		auto& buff = buffs[i];
-		auto& dataBuffer = _cams[i].buffers[buff.index];
+    auto& dataBuffer = _cams[i].buffers[0]; // [buff.index];
 		auto* cudaBuffer = _cams[i].cuda_out_buffer;
 
 		gpuConvertUYVY2RGB_async((uchar*)dataBuffer.start, d_src[i], cudaBuffer, frameSize.width, frameSize.height, _cudaStream[i]);
@@ -638,6 +721,7 @@ bool MultiCameraSource::capture(std::array<Frame, 4>& frames)
 	}
 
 
+  /*
 	// enqueue buffer after processing
 	for(size_t i = 0; i < _cams.size(); ++i){
 		auto& buff = buffs[i];
@@ -657,6 +741,8 @@ bool MultiCameraSource::capture(std::array<Frame, 4>& frames)
 
 #endif
 	return true;
+  */
+  return true;
 }
 
 

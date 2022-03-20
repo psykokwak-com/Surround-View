@@ -13,11 +13,11 @@ struct SVAppConfig
     int cam_height = CAMERA_HEIGHT;
     int calib_width = CAMERA_WIDTH;
     int calib_height = CAMERA_HEIGHT;
-    std::string undist_folder {"calibrationData/1280/video"};
-    std::string calib_folder = "campar/";
-    std::string car_model = "models/Dodge Challenger SRT Hellcat 2015.obj";
-    std::string car_vert_shader = "shaders/modelshadervert.glsl";
-    std::string car_frag_shader = "shaders/modelshaderfrag.glsl";
+    std::string undist_folder {"../calibrationData/1280/video"};
+    std::string calib_folder = "../camparameters/";
+    std::string car_model = "../models/Dodge Challenger SRT Hellcat 2015.obj";
+    std::string car_vert_shader = "../shaders/modelshadervert.glsl";
+    std::string car_frag_shader = "../shaders/modelshaderfrag.glsl";
     std::string win1{"Cam0"}; // window name
     std::string win2{"Cam1"};
     int numbands = 4;
@@ -27,12 +27,12 @@ struct SVAppConfig
     std::chrono::seconds time_recompute_photometric_gain{10};
     std::chrono::seconds time_recompute_photometric_luminance{7};
     ConfigBowl cbowl;
-    std::string surroundshadervert = "shaders/surroundvert.glsl";
-    std::string surroundshaderfrag = "shaders/surroundfrag.glsl";
-    std::string screenshadervert = "shaders/frame_screenvert.glsl";
-    std::string screenshaderfrag = "shaders/frame_screenfrag.glsl";
-    std::string blackrectshadervert = "shaders/blackrectshadervert.glsl";
-    std::string blackrectshaderfrag = "shaders/blackrectshaderfrag.glsl";
+    std::string surroundshadervert = "../shaders/surroundvert.glsl";
+    std::string surroundshaderfrag = "../shaders/surroundfrag.glsl";
+    std::string screenshadervert = "../shaders/frame_screenvert.glsl";
+    std::string screenshaderfrag = "../shaders/frame_screenfrag.glsl";
+    std::string blackrectshadervert = "../shaders/blackrectshadervert.glsl";
+    std::string blackrectshaderfrag = "../shaders/blackrectshaderfrag.glsl";
     bool usePedestrianDetection = false;
 };
 

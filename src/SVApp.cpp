@@ -103,7 +103,7 @@ bool SVApp::init(const int limit_iteration_init_)
         while (!svtitch->getInit() && limit_iteration_init != 0 && !finish){
 
                 if (!source->capture(frames)){
-                        std::cerr << "capture failed\n";
+                        std::cerr << "capture failed :(\n";
                         std::this_thread::sleep_for(1ms);
                         continue;
                 }
@@ -142,7 +142,7 @@ void SVApp::run()
     while (!finish){
 
             if (!source->capture(frames)){
-                    std::cerr << "capture failed\n";
+                    std::cerr << "capture failed :((\n";
                     std::this_thread::sleep_for(1ms);
                     continue;
             }
@@ -150,7 +150,7 @@ void SVApp::run()
             for (auto i = 1; i <= frames.size(); ++i)
               cameradata[i] = frames[i - 1].gpuFrame;
 
-            if (usePedDetect)
+            if (usePedDetect && 0)
                 sv_ped_det->detect(cameradata, pedestrian_rect);
 
             svtitch->stitch(cameradata, stitch_frame);
