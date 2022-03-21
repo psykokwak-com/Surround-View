@@ -23,7 +23,7 @@ struct SVAppConfig
     int numbands = 4;
     float scale_factor = 0.65;
     int limit_iteration_init = 5000;
-    int num_pool_threads = 2;
+    int num_pool_threads = 4;
     std::chrono::seconds time_recompute_photometric_gain{10};
     std::chrono::seconds time_recompute_photometric_luminance{7};
     ConfigBowl cbowl;
@@ -53,7 +53,7 @@ private:
     std::shared_ptr<SVDisplayView> dp;
     std::shared_ptr<SVStitcher> svtitch;
     std::shared_ptr<SVPedDetect> sv_ped_det;
-    std::array<MultiCameraSource::Frame, CAM_NUMS> frames;
+    std::array<Frame, CAM_NUMS> frames;
     std::vector<cv::cuda::GpuMat> cameradata;
     std::vector<std::vector<cv::Rect>> pedestrian_rect;
     cv::cuda::GpuMat stitch_frame;

@@ -384,7 +384,7 @@ bool SVStitcher::stitch(std::vector<cv::cuda::GpuMat>& imgs, cv::cuda::GpuMat& b
 #ifndef NO_OMP
     #pragma omp parallel for default(none) shared(imgs)
 #endif
-    for(size_t i = 0; i < imgs_num; ++i){
+    for(int i = 0; i < imgs_num; ++i){
 
           cv::cuda::resize(imgs[i], gpu_warped_scale_[i], cv::Size(), scale_factor, scale_factor, cv::INTER_NEAREST, loopStreamObj);
 

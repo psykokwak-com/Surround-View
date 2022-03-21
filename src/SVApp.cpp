@@ -91,7 +91,10 @@ bool SVApp::init(const int limit_iteration_init_)
 #ifndef GL_USE
         cv::namedWindow(svappcfg.win1, cv::WINDOW_AUTOSIZE | cv::WINDOW_OPENGL);
 #endif
-        source->startStream();
+        if (!source->startStream()) {
+          std::cerr << "unable to start stream" << std::endl;
+          return false;
+        }
 
         view_scene = std::make_shared<SVRender>(cameraSize.width, cameraSize.height);
         dp = std::make_shared<SVDisplayView>();
@@ -150,7 +153,7 @@ void SVApp::run()
             for (auto i = 1; i <= frames.size(); ++i)
               cameradata[i] = frames[i - 1].gpuFrame;
 
-            if (usePedDetect && 0)
+            if (usePedDetect)
                 sv_ped_det->detect(cameradata, pedestrian_rect);
 
             svtitch->stitch(cameradata, stitch_frame);

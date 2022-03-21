@@ -131,15 +131,13 @@ bool SVDisplayView::init(const int32 wnd_width, const int32 wnd_height, std::sha
           exit(1);
         }
 
-
-
         glEnable(GL_DEPTH_TEST);
         //glDepthFunc(GL_LEQUAL);
 
         glViewport(0, 0, width, height);
 
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-        // reszie callback
+        //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        // resize callback
         glfwSetFramebufferSizeCallback(window, frame_buffer_size_callback);
         // set mouse pos callback
         glfwSetCursorPosCallback(window, processMouse);
