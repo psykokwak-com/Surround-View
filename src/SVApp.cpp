@@ -10,8 +10,9 @@
 #include <opencv2/highgui.hpp>
 #endif
 
-
+#ifdef _DEBUG
 #define LOG_USE
+#endif
 
 bool finish = false;
 
@@ -25,7 +26,7 @@ static void addCar(std::shared_ptr<SVRender>& view_, const SVAppConfig& svcfg)
 #endif
 
     transform_car = glm::rotate(transform_car, glm::radians(-90.f), glm::vec3(1.f, 0.f, 0.f));
-    transform_car = glm::scale(transform_car, glm::vec3(0.002f));
+    transform_car = glm::scale(transform_car, glm::vec3(1.0f));
 
     bool is_Add = view_->addModel(svcfg.car_model, svcfg.car_vert_shader,
                     svcfg.car_frag_shader, transform_car);
@@ -165,11 +166,15 @@ void SVApp::run()
             bool okRender = dp->render(stitch_frame);
             if (!okRender)
               break;
-            std::this_thread::sleep_for(3ms);
+            std::this_thread::sleep_for(5ms);
 #else
-           cv::imshow(svappcfg.win1, stitch_frame);
-           if (cv::waitKey(1) > 0)
-               break;
+            {
+              cv::Mat stitch_frame_cpu(stitch_frame.size(), stitch_frame.type());
+              stitch_frame.download(stitch_frame_cpu);
+              cv::imshow(svappcfg.win1, stitch_frame_cpu);
+            }
+            if (cv::waitKey(1) > 0)
+                break;
 #endif
 
             const auto now = std::chrono::high_resolution_clock::now();

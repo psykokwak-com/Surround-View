@@ -52,9 +52,14 @@ list(APPEND PROJ_INCLUDE_DIRS "${3DP_INCLUDE_DIR}/glfw-3.3.6.bin.WIN64/include")
 #list(APPEND PROJ_LIBRARIES "${3DP_INCLUDE_DIR}/glm/build/glm/Release/glm_static.lib")
 list(APPEND PROJ_INCLUDE_DIRS "${3DP_INCLUDE_DIR}/glm")
 
-list(APPEND PROJ_LIBRARIES "${3DP_INCLUDE_DIR}/assimp-3.3.1/build/install/lib/assimp-vc140-mt.lib")
-list(APPEND PROJ_INCLUDE_DIRS "${3DP_INCLUDE_DIR}/assimp-3.3.1/build/install/include")
+list(APPEND PROJ_LIBRARIES "${3DP_INCLUDE_DIR}/assimp-5.2.3/build/install/lib/assimp-vc141-mt.lib")
+list(APPEND PROJ_INCLUDE_DIRS "${3DP_INCLUDE_DIR}/assimp-5.2.3/build/install/include")
 
+file(GLOB files "${3DP_INCLUDE_DIR}/ffmpeg-5.0-full_build-shared/lib/*.lib")
+foreach(file ${files})
+  list(APPEND PROJ_LIBRARIES "${file}")
+endforeach()
+list(APPEND PROJ_INCLUDE_DIRS "${3DP_INCLUDE_DIR}/ffmpeg-5.0-full_build-shared/include")
 
 #file(GLOB files "${PROJECT_SOURCE_DIR}/build/packages/WindowsStoreOpenGL.0.777.79/build/native/Release_x64/*.lib")
 #foreach(file ${files})

@@ -172,7 +172,6 @@ bool SVRender::addModel(const std::string& pathmodel, const std::string& pathver
       return false;
     }
 
-
     modelshaders.emplace_back(std::make_shared<Shader>());
     auto last_idx = modelshaders.size() - 1;
     res = modelshaders[last_idx]->initShader(pathvertshader.c_str(), pathfragshader.c_str());
@@ -180,7 +179,6 @@ bool SVRender::addModel(const std::string& pathmodel, const std::string& pathver
       std::cerr << "Error: fail init shaders for load model\n";
       return false;
     }
-
 
     models.emplace_back(std::move(m));
     modeltranformations.emplace_back(mat_transform);

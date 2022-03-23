@@ -16,8 +16,9 @@
 #include <opencv2/cudaimgproc.hpp>
 #include <opencv2/cudawarping.hpp>
 
-
 #include <omp.h>
+
+//#define DUMMY_STREAM
 
 
 #define LOG_DEBUG(msg, ...)   printf("DEBUG:   " msg "\n", ##__VA_ARGS__)
@@ -58,6 +59,8 @@ bool InternalCameraParams::read(const std::string& filepath, const int num, cons
 
 MultiCameraSource::MultiCameraSource()
 {
+  cv::Mat::setDefaultAllocator(cv::cuda::HostMem::getAllocator(cv::cuda::HostMem::AllocType::SHARED));
+
   memset(_pVideoCapture, 0, sizeof(_pVideoCapture));
 
   cudaMallocManaged(&_cudaManagedMemory, CAMERA_WIDTH * CAMERA_HEIGHT * 4 * 4, cudaMemAttachGlobal);
@@ -75,31 +78,55 @@ MultiCameraSource::~MultiCameraSource()
 
 bool MultiCameraSource::startStream()
 {
+#ifdef DUMMY_STREAM
+  return true;
+#endif
+
+  std::vector<std::string> videoCaptureUrl;
+
+
+  videoCaptureUrl.push_back("rtsp://root:axis@192.168.50.3/axis-media/media.amp?camera=1&audio=0&pull=1"); // Front
+  videoCaptureUrl.push_back("rtsp://root:axis@192.168.50.3/axis-media/media.amp?camera=1&audio=0&pull=1");
+  videoCaptureUrl.push_back("rtsp://root:axis@192.168.50.3/axis-media/media.amp?camera=2&audio=0&pull=1"); // Back
+  videoCaptureUrl.push_back("rtsp://root:axis@192.168.50.3/axis-media/media.amp?camera=2&audio=0&pull=1");
+
+  /*
+  videoCaptureUrl.push_back("rtsp://root:axis@192.168.255.40/axis-media/media.amp?camera=1&audio=0&pull=1");
+  videoCaptureUrl.push_back("rtsp://root:axis@192.168.255.40/axis-media/media.amp?camera=1&audio=0&pull=1");
+  videoCaptureUrl.push_back("rtsp://root:axis@192.168.255.40/axis-media/media.amp?camera=1&audio=0&pull=1");
+  videoCaptureUrl.push_back("rtsp://root:axis@192.168.255.40/axis-media/media.amp?camera=1&audio=0&pull=1");
+  */
+
+#ifndef NO_OMP
+#pragma omp parallel for default(shared)
+#endif
   for (int i = 0; i < CAM_NUMS; i++) {
     if (_pVideoCapture[i])
       continue;
 
-    _pVideoCapture[i] = new cv::VideoCapture();
-    _pVideoCapture[i]->set(cv::CAP_PROP_BUFFERSIZE, 1);
-    _pVideoCapture[i]->set(cv::CAP_PROP_OPEN_TIMEOUT_MSEC, 5000);
-    _pVideoCapture[i]->set(cv::CAP_PROP_READ_TIMEOUT_MSEC, 5000);
+    _pVideoCapture[i] = new TCVideoClient("camera " + std::to_string(i));
+    _pVideoCapture[i]->setUrl(videoCaptureUrl[i]);
+    _pVideoCapture[i]->setOverrideRTSPTimeout(5);
+    _pVideoCapture[i]->setTransport("udp");
+    _pVideoCapture[i]->play();
+
+    LOG_DEBUG("Opening camera - %d ... OK", i);
   }
 
-  _pVideoCapture[0]->open("rtsp://root:axis@192.168.50.3/axis-media/media.amp?camera=2&audio=0&pull=1"); // Back
-  _pVideoCapture[1]->open("rtsp://root:axis@192.168.50.3/axis-media/media.amp?camera=4&audio=0&pull=1");
-  _pVideoCapture[2]->open("rtsp://root:axis@192.168.50.3/axis-media/media.amp?camera=1&audio=0&pull=1"); // Front
-  _pVideoCapture[3]->open("rtsp://root:axis@192.168.50.3/axis-media/media.amp?camera=4&audio=0&pull=1");
+  do {
+    bool ok = true;
 
-  for (int i = 0; i < CAM_NUMS; i++)
-    LOG_DEBUG("Opening camera - %d ... %s", i, _pVideoCapture[1]->isOpened() ? "OK :)" : "NOK :(");
+    for (int i = 0; i < CAM_NUMS; i++)
+      if (!_pVideoCapture[i]->playing()) ok = false;
 
+    if (ok)
+      break;
 
-  if (_pVideoCapture[0]->isOpened() && _pVideoCapture[1]->isOpened() && _pVideoCapture[2]->isOpened() && _pVideoCapture[3]->isOpened())
-    return true;
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));;
 
-  stopStream();
+  } while (42);
 
-  return false;
+  return true;
 }
 
 bool MultiCameraSource::stopStream()
@@ -157,19 +184,21 @@ int MultiCameraSource::init(const std::string& param_filepath, const cv::Size& c
 bool MultiCameraSource::capture(std::array<Frame, CAM_NUMS>& frames)
 {
 #ifndef NO_OMP
-//pragma omp parallel for default(none)
+#pragma omp parallel for default(none) shared(frames)
 #endif
   for (int i = 0; i < CAM_NUMS; i++) {
-    cv::Mat cpuFrame;// (_size, CV_8UC3);
-    cv::cuda::GpuMat gpuFrame;
 
-    if (!_pVideoCapture[i]->read(cpuFrame))
-      return false;
 
-    gpuFrame.upload(cpuFrame);
+#ifdef DUMMY_STREAM
+    cv::cuda::GpuMat gpuFrame(_size, CV_8UC3, 0xFFFFFF);
+#else
+    cv::cuda::GpuMat gpuFrame(_size, CV_8UC3);
+    if (!_pVideoCapture[i]->readLastFrame(gpuFrame))
+      continue;
+#endif
 
     cv::cuda::remap(gpuFrame, _camUndistort[i].undistFrame, _camUndistort[i].remapX, _camUndistort[i].remapY, cv::INTER_CUBIC, cv::BORDER_CONSTANT, cv::Scalar());
     frames[i].gpuFrame = _camUndistort[i].undistFrame(_camUndistort[i].roiFrame);
-  }
+}
   return true;
 }

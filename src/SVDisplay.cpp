@@ -46,8 +46,8 @@ static void processInput(GLFWwindow* window, SVDisplayView* svdisp)
                 glfwSetWindowShouldClose(window, true);
         }
 
-        const float cameraSpeed = 1.0f * deltaTime; //2.5f
-        constexpr auto const_speed = 0.5f;
+       // const float cameraSpeed = 1.0f * deltaTime; //2.5f
+        constexpr auto const_speed = 0.02f;
 
         if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS && !demo_key_press) {
                 svdisp->setTVMode(false);
@@ -136,7 +136,7 @@ bool SVDisplayView::init(const int32 wnd_width, const int32 wnd_height, std::sha
 
         glViewport(0, 0, width, height);
 
-        //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         // resize callback
         glfwSetFramebufferSizeCallback(window, frame_buffer_size_callback);
         // set mouse pos callback

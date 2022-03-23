@@ -24,6 +24,7 @@ using uchar = unsigned char;
 #define CAMERA_HEIGHT 720
 #define CAM_NUMS 4
 
+#include "TCVideoClient.h"
 
 typedef struct 
 {
@@ -49,7 +50,7 @@ typedef struct {
 class MultiCameraSource
 {
 private:
-  cv::VideoCapture *_pVideoCapture[CAM_NUMS];
+  TCVideoClient *_pVideoCapture[CAM_NUMS];
   cv::Size _size;
   std::array<InternalCameraParams, CAM_NUMS> _camParams;
   std::array<CameraUndistortData, CAM_NUMS> _camUndistort;

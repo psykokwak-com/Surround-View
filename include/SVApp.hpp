@@ -15,7 +15,8 @@ struct SVAppConfig
     int calib_height = CAMERA_HEIGHT;
     std::string undist_folder {"../calibrationData/1280/video"};
     std::string calib_folder = "../camparameters/";
-    std::string car_model = "../models/Dodge Challenger SRT Hellcat 2015.obj";
+    //std::string car_model = "../models/Dodge Challenger SRT Hellcat 2015.obj";
+    std::string car_model = "../models/TEC800.obj";
     std::string car_vert_shader = "../shaders/modelshadervert.glsl";
     std::string car_frag_shader = "../shaders/modelshaderfrag.glsl";
     std::string win1{"Cam0"}; // window name
@@ -31,8 +32,8 @@ struct SVAppConfig
     std::string surroundshaderfrag = "../shaders/surroundfrag.glsl";
     std::string screenshadervert = "../shaders/frame_screenvert.glsl";
     std::string screenshaderfrag = "../shaders/frame_screenfrag.glsl";
-    std::string blackrectshadervert = "../shaders/blackrectshadervert.glsl";
-    std::string blackrectshaderfrag = "../shaders/blackrectshaderfrag.glsl";
+    std::string blackrectshadervert = "";// "../shaders/blackrectshadervert.glsl";
+    std::string blackrectshaderfrag = "";// "../shaders/blackrectshaderfrag.glsl";
     bool usePedestrianDetection = false;
 };
 
